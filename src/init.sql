@@ -45,7 +45,7 @@ CREATE TABLE catapult_structure
 CREATE TABLE catapult
 (
     id bigint generated always as identity primary key,
-    rocket bigint references rocket(id) NOT NULL,
+    rocket bigint unique references rocket(id) NOT NULL,
     structure int references catapult_structure(id) NOT NULL,
     description TEXT,
     location bigint references location(id) NOT NULL
