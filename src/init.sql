@@ -12,8 +12,14 @@ DROP TABLE IF EXISTS feelings CASCADE;
 CREATE TABLE location
 (
     id bigint generated always as identity primary key,
-    name varchar(128) UNIQUE NOT NULL,
-    history TEXT
+    name varchar(128) UNIQUE NOT NULL
+);
+
+CREATE TABLE history
+(
+    id bigint generated always as identity primary key,
+    history(id) bigint unique references location(id) NOT NULL,
+    description TEXT
 );
 
 CREATE TABLE flights
@@ -38,7 +44,7 @@ CREATE TABLE rocket
 CREATE TABLE catapult_structure
 (
     id int generated always as identity primary key,
-    model VARCHAR(128) UNIQUE NOT NULL,
+    model VARCHAR(128) NOT NULL,
     description TEXT
 );
 
@@ -87,16 +93,24 @@ CREATE TABLE feelings_character
     id_character int references character(id)
 );
 
-INSERT INTO location(name, history) VALUES ('Германия', 'вселенная анимешки\манги "монстр" ');
-INSERT INTO location(name, history) VALUES ('Грандлайн', 'вселенная анимешки\манги "Ванпис" ');
-INSERT INTO object_viewpoint(object, rightness) VALUES (1,'true');
-INSERT INTO object_viewpoint(object, rightness) VALUES (2,'false');
-INSERT INTO viewpoint(object_id, description) VALUES (1,'блаблабла');
-INSERT INTO viewpoint(object_id, description) VALUES (2,'sdfgdsfdg');
-INSERT INTO character(name, charging_capacity, location, viewpoint) VALUES ('Флойд', 100, 1, 1);
-INSERT INTO character(name, charging_capacity, location, viewpoint) VALUES ('Миша', 200, 2, 2);
-INSERT INTO flights(security_lvl, description, depart, arrival) VALUES ('35','oiksfmldn', 1, 2);
-INSERT INTO rocket(type, weight, punching_power, direction, acceleration) VALUES ('земля-воздух', 1000, 1500, 1, 100);
-INSERT INTO catapult_structure(model, description) VALUES ('RTX72','12345654321');
-INSERT INTO catapult(rocket, structure, description, location) VALUES (1, 1, 'ляляля', 1);
-INSERT INTO feelings(description, reason) VALUES ('', 'psihicheskie otkloneniya');
+-- 1
+CREATE OR REPLACE FUNCTION update_rocket_description()
+RETURNS TRIGGER AS
+$$
+BEGIN
+    IF NEW.punching_power <= 50 THEN
+
+        UPDATE catapult
+        SET description = 'Катапульта вещает: "Ракета недостаточно мощная, не могу пульнуть сорян :("'
+        WHERE rocket = NEW.id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER rocket_punching_power_trigger
+AFTER UPDATE ON rocket
+FOR EACH ROW
+EXECUTE FUNCTION update_rocket_description();
